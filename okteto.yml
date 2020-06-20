@@ -1,0 +1,15 @@
+name: dev-jingtao-fission-bundle
+image: golang:1.12-alpine
+workdir: /go/src/github.com/fission/fission
+volumes:
+environment:
+  - TRACING_SAMPLING_RATE=0.5
+#  TRACE_JAEGER_COLLECTOR_ENDPOINT=
+  - MESSAGE_QUEUE_URL=kafka-dev.kafka-dev:9092
+  - MESSAGE_QUEUE_TYPE=kafka
+  - MESSAGE_QUEUE_KAFKA_VERSION=5.0.1
+  - DEBUG_ENV=true
+securityContext:
+  capabilities:
+    add:
+      - SYS_PTRACE
