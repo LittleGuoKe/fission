@@ -286,6 +286,11 @@ prometheus:
   ## that is accessible by components.
   serviceEndpoint: ""
 
+## Grafana for show metrics
+grafana:
+  ## set this flag to true if grafana needs to be deployed along with fission
+  enabled: false
+
 ## set this flag to false if you dont need canary deployment feature
 canaryDeployment:
   enabled: true

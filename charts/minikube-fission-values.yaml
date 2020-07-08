@@ -1,0 +1,35 @@
+analytics:
+  false
+
+kafka:
+  enabled: true
+  brokers: kafka.fission-base:9092
+  version: 5.0.1
+
+routerServiceType: NodePort
+
+prometheus:
+  enabled: true
+  alertmanager:
+    persistentVolume:
+      enabled: true
+      storageClass: local-path
+  pushgateway:
+    persistentVolume:
+      enabled: true
+      storageClass: local-path
+  server:
+    persistentVolume:
+      enabled: true
+      storageClass: local-path
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    type: pvc
+    size: 2Gi
+
+persistence:
+  storageClass: local-path
