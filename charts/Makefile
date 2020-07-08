@@ -41,18 +41,25 @@ install_fission:
 		./fission-all
 	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
+proxy_all: proxy_fission_grafana proxy_fission_prometheus proxy_fission_pushgateway proxy_fission_router
+
+proxy_fission_router:
+	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/router 9080:80 --address 0.0.0.0 &
+	echo "fission router map to 0.0.0.0:9080"
 
 proxy_fission_grafana:
+	echo "grafana admin password:"
 	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward \
-		$(shell kubectl --context=$(CONTEXT_NAME) get pods --namespace $(FISSION_NAMESPACE) -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=fission-grafana" -o jsonpath="{.items[0].metadata.name}") \
-		3000 --address 0.0.0.0 &
+	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-grafana 3000 --address 0.0.0.0 &
+	echo "fission grafana map to 0.0.0.0:3000"
 
 proxy_fission_prometheus:
 	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-server 9090:80 --address 0.0.0.0 &
+	echo "fission prometheus map to 0.0.0.0:9090"
 
 proxy_fission_pushgateway:
 	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-pushgateway 9091 --address 0.0.0.0 &
+	echo "fission pushgateway map to 0.0.0.0:9090"
 
 
 uninstall_fission:
