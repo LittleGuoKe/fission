@@ -4,6 +4,7 @@ RUN apk add bash ca-certificates git gcc g++ libc-dev
 ARG GOPKG=github.com/fission/fission
 
 ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.io
 
 WORKDIR /go/src/${GOPKG}
 
