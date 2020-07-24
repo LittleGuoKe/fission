@@ -21,7 +21,21 @@ metadata:
     {{- if .Values.enableIstio }}
     istio-injection: enabled
     {{- end }}
+
+# jingtao add for global secret and configmap
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.GlobalSecretConfigmapNamespace }}
+  labels:
+    name: fission-global-secret-configmap-namespace
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    {{- if .Values.enableIstio }}
+    istio-injection: enabled
+    {{- end }}
 {{- end }}
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -110,6 +124,15 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   "config.yaml": {{ include "config" . | b64enc }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fission-function-global-configmap
+  namespace: {{ .Values.GlobalSecretConfigmapNamespace }}
+data:
+  "url-pushgateway": fission-prometheus-pushgateway.fission  # 目前不知道怎么获取相关的变量
 
 ---
 apiVersion: apps/v1

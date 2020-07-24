@@ -139,6 +139,13 @@ const (
 	SecretConfigMapGetterCR = "secret-configmap-getter"
 	SecretConfigMapGetterRB = "secret-configmap-getter-binding"
 
+	// jingtao add 全局配置所在的命名空间
+	GlobalSecretConfigMapNS = "fission-secret-configmap"
+	// jingtao add Cluster Role 在fission安装时添加的权限,复用fission自带的权限
+	GlobalSecretConfigMapGetterCR = "secret-configmap-getter"
+	// jingtao add 绑定服务帐号和角色之间的关系
+	GlobalSecretConfigMapGetterRB = "global-secret-configmap-getter-binding"
+
 	PackageGetterCR = "package-getter"
 	PackageGetterRB = "package-getter-binding"
 

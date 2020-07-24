@@ -216,6 +216,15 @@ func (client *PreUpgradeTaskClient) SetupRoleBindings() {
 			zap.String("service_account_namespace", client.fnPodNs))
 	}
 
+	err = utils.SetupRoleBinding(client.logger, client.k8sClient, fv1.GlobalSecretConfigMapGetterRB, fv1.GlobalSecretConfigMapNS, fv1.GlobalSecretConfigMapGetterCR, fv1.ClusterRole, fv1.FissionFetcherSA, client.fnPodNs)
+	if err != nil {
+		client.logger.Fatal("error setting up rolebinding for service account",
+			zap.Error(err),
+			zap.String("role_binding", fv1.GlobalSecretConfigMapGetterRB),
+			zap.String("service_account", fv1.FissionFetcherSA),
+			zap.String("service_account_namespace", client.fnPodNs))
+	}
+
 	client.logger.Info("created rolebindings in default namespace",
 		zap.Strings("role_bindings", []string{fv1.PackageGetterRB, fv1.SecretConfigMapGetterRB}))
 }
