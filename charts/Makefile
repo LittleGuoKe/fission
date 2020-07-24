@@ -1,13 +1,16 @@
 FISSION_NAMESPACE="fission"
 CONTEXT_NAME="minikube"
 TEMPLATE_NAME="fission"
+PROXY=http://hp.jingtao.fun:1080
 
 FISSION_IMAGE_NAME="jingtao/fission-bundle"
-FISSION_IMAGE_TAG="2020-07-14-2"
+FISSION_IMAGE_TAG="2020-07-24-1"  # preUpgradeChecksImage 也使用这个tag
 FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
-FISSION_FETCHER_IMAGE_TAG="2020-07-14-2"
+FISSION_FETCHER_IMAGE_TAG="2020-07-24-1"
 FISSION_PREUPGRADECHECKS_IMAGE_NAME="jingtao/fission-preupgradechecks"
-FISSION_PREUPGRADECHECKS_IMAGE_TAG="2020-07-14-2"
+FISSION_PREUPGRADECHECKS_IMAGE_TAG="2020-07-24-1"
+
+fission_env_init:tag="2020-07-24-3"
 
 ## fission 集群初始化
 init_fission_cluster: minikube_start minikube_environment_init install_fission
@@ -15,11 +18,12 @@ init_fission_cluster: minikube_start minikube_environment_init install_fission
 
 ## minikube的运维命令
 minikube_start:
-	https_proxy=http://hp.jingtao.fun:1080 \
+	https_proxy=$(PROXY) http_proxy=$(PROXY) no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24 \
 		minikube start \
-			--docker-env http_proxy=http://hp.jingtao.fun:1080 \
-			--docker-env https_proxy=http://hp.jingtao.fun:1080 \
+			--docker-env http_proxy=$(PROXY) \
+			--docker-env https_proxy=$(PROXY) \
 			--docker-env no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24 \
+			--addons=metrics-server \
 			--kubernetes-version v1.18.3 \
 			--driver=virtualbox \
 			--cpus=6 \
@@ -51,7 +55,7 @@ export_docker_env:
 
 
 ## fission的安装
-install_fission: # build_all
+install_fission: build_all
 	kubectl --context=$(CONTEXT_NAME) create namespace $(FISSION_NAMESPACE)
 	cd fission-all && https_proxy=http://hp.jingtao.fun:1080 helm dependency update && cd -
 	https_proxy=http://hp.jingtao.fun:1080 \
@@ -64,18 +68,18 @@ install_fission: # build_all
 		./fission-all
 	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
-update_fission_bundle_image: build_all
+update_fission_image: build_all
 	helm --kube-context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
 		-f minikube-fission-values.yaml \
 		--set repository= \
 		--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
 		--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
-		--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) \
+		--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
 		./fission-all
 
 ## fission镜像管理
 # build_fission_bundle build_fission_fetcher build_fission_cli build_fission_preupgradechecks
-build_all: build_fission_bundle build_fission_fetcher build_fission_cli
+build_all: build_fission_bundle build_fission_fetcher build_fission_preupgradechecks build_fission_cli
 
 build_fission_bundle: export_docker_env
 	# docker environment from `minikube docker-env`
@@ -93,6 +97,15 @@ build_fission_preupgradechecks: export_docker_env
 build_fission_cli:
 	cd ../cmd/fission-cli && go build -o ~/go/bin/fission
 
+
+## fission 环境部署
+fission_env_init:
+	#fission env delete --name python
+	#fission env delete --name python-chrome
+	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && docker build -t env/python:$(tag) . && \
+		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest
+	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-chrome && docker build -t env/python-chrome:$(tag) . && \
+  		fission env create --name python-chrome --image env/python-chrome:$(tag) --builder fission/python-builder:latest
 
 ## 代理相关配置
 proxy_all: proxy_fission_grafana proxy_fission_prometheus proxy_fission_pushgateway proxy_fission_router
