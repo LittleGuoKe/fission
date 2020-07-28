@@ -3,6 +3,12 @@ CONTEXT_NAME="minikube"
 TEMPLATE_NAME="fission"
 PROXY=http://hp.jingtao.fun:1080
 
+# docker environment from `minikube docker-env`
+DOCKER_TLS_VERIFY="1"
+DOCKER_HOST="tcp://192.168.99.103:2376"
+DOCKER_CERT_PATH="/home/jingtao/.minikube/certs"
+MINIKUBE_ACTIVE_DOCKERD="minikube"
+
 FISSION_IMAGE_NAME="jingtao/fission-bundle"
 FISSION_IMAGE_TAG="2020-07-24-1"  # preUpgradeChecksImage 也使用这个tag
 FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
@@ -24,6 +30,7 @@ minikube_start:
 			--docker-env https_proxy=$(PROXY) \
 			--docker-env no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24 \
 			--addons=metrics-server \
+			--addons=storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
 			--driver=virtualbox \
 			--cpus=6 \
@@ -42,16 +49,13 @@ minikube_delete:
 
 
 ## minikube的基础设施环境
-minikube_environment_init: install_localVolume_provisioner rancher_import export_docker_env
+minikube_environment_init: install_localVolume_provisioner rancher_import
 
 install_localVolume_provisioner:
 	kubectl --context=$(CONTEXT_NAME) apply -f rancher-local-path-storage.yaml
 
 rancher_import:
 	kubectl apply -f https://rancher.huxiang.pro/v3/import/98qghf4j58vrk746qv24wp5b2v8bnz9f4pj8st67tlqzgknznqz7dn.yaml
-
-export_docker_env:
-	minikube -p minikube docker-env > .docker_env
 
 
 ## fission的安装
@@ -81,17 +85,16 @@ update_fission_image: build_all
 # build_fission_bundle build_fission_fetcher build_fission_cli build_fission_preupgradechecks
 build_all: build_fission_bundle build_fission_fetcher build_fission_preupgradechecks build_fission_cli
 
-build_fission_bundle: export_docker_env
-	# docker environment from `minikube docker-env`
-	bash .docker_env && \
+build_fission_bundle:
+	DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t $(FISSION_IMAGE_NAME):$(FISSION_IMAGE_TAG) -f ../cmd/fission-bundle/Dockerfile.fission-bundle ../
 
-build_fission_fetcher: export_docker_env
-	bash .docker_env && \
+build_fission_fetcher:
+	DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t $(FISSION_FETCHER_IMAGE_NAME):$(FISSION_FETCHER_IMAGE_TAG) -f ../cmd/fetcher/Dockerfile.fission-fetcher ../
 
-build_fission_preupgradechecks: export_docker_env
-	bash .docker_env && \
+build_fission_preupgradechecks:
+	DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t $(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) -f ../cmd/preupgradechecks/Dockerfile.fission-preupgradechecks ../
 
 build_fission_cli:
