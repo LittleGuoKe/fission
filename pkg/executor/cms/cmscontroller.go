@@ -48,7 +48,9 @@ type (
 func MakeConfigSecretController(logger *zap.Logger, fissionClient *crd.FissionClient,
 	kubernetesClient *kubernetes.Clientset, types map[fv1.ExecutorType]executortype.ExecutorType) *ConfigSecretController {
 	logger.Debug("Creating ConfigMap & Secret Controller")
+	// jingtao-note: 订阅configmaps的变化，并更新对应的函数
 	_, cmcontroller := initConfigmapController(logger, fissionClient, kubernetesClient, types)
+	// jingtao-note: 订阅secrets的变化，并更新对应的函数
 	_, scontroller := initSecretController(logger, fissionClient, kubernetesClient, types)
 	cmsController := &ConfigSecretController{
 		logger:              logger,

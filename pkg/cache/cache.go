@@ -33,10 +33,11 @@ const (
 	COPY
 )
 
+// jingtao-note: 一个简单的版的redis map, 十分优秀
 type (
 	Value struct {
-		ctime time.Time
-		atime time.Time
+		ctime time.Time // jingtao-note: 创建时的时间 =0时，永不过期
+		atime time.Time // jingtao-note: Get会重新计时 =0时，永不过期
 		value interface{}
 	}
 	Cache struct {

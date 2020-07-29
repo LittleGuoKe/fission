@@ -63,7 +63,9 @@ type (
 	}
 )
 
+// jingtao-note: 构造对外服务的API
 func MakeAPI(logger *zap.Logger, featureStatus map[string]string) (*API, error) {
+	// jingtao-note: 获取logger, fission client and k8s client
 	api, err := makeCRDBackedAPI(logger)
 
 	u := os.Getenv("STORAGE_SERVICE_URL")
@@ -190,6 +192,7 @@ func (api *API) GetSvcName(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, service.Name+"."+podNamespace)
 }
 
+// jingtao-note: 创建路由，传给http.ListenAndServe后，就能启动一个http的客户端
 func (api *API) GetHandler() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", api.HealthHandler).Methods("GET")

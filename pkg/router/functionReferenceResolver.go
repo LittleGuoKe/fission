@@ -16,6 +16,7 @@ limitations under the License.
 
 package router
 
+// jingtao-note: 解析http path和函数ID之间的对应
 import (
 	"fmt"
 	"time"

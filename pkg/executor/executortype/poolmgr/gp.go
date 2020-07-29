@@ -707,7 +707,7 @@ func (gp *GenericPool) getFuncSvc(ctx context.Context, fn *fv1.Function) (*fscac
 	if err != nil {
 		return nil, err
 	}
-
+	// jingtao-note: 打点
 	gp.fsCache.IncreaseColdStarts(fn.ObjectMeta.Name, string(fn.ObjectMeta.UID))
 
 	return fsvc, nil

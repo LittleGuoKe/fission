@@ -342,12 +342,14 @@ type (
 		// FunctionTimeout provides a maximum amount of duration within which a request for
 		// a particular function execution should be complete.
 		// This is optional. If not specified default value will be taken as 60s
+		// jingtao-note: 允许一个函数处理请求的最长时间
 		FunctionTimeout int `json:"functionTimeout,omitempty"`
 
 		// IdleTimeout specifies the length of time that a function is idle before the
 		// function pod(s) are eligible for deletion. If no traffic to the function
 		// is detected within the idle timeout, the executor will then recycle the
 		// function pod(s) to release resources.
+		// jingtao-note: 允许一个函数闲置的最长时间
 		IdleTimeout *int `json:"idletimeout,omitempty"`
 	}
 
