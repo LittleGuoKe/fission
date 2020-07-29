@@ -224,6 +224,7 @@ func (gpm *GenericPoolManager) RefreshFuncPods(logger *zap.Logger, f fv1.Functio
 		return err
 	}
 
+	// jingtao note: 删除缓存 记录函数存活时间等信息
 	gp.fsCache.DeleteEntry(funcSvc)
 
 	funcLabels := gp.labelsForFunction(&f.ObjectMeta)
@@ -236,6 +237,7 @@ func (gpm *GenericPoolManager) RefreshFuncPods(logger *zap.Logger, f fv1.Functio
 		return err
 	}
 
+	// 执行pod的删除操作
 	for _, po := range podList.Items {
 		err := gpm.kubernetesClient.CoreV1().Pods(po.ObjectMeta.Namespace).Delete(po.ObjectMeta.Name, &metav1.DeleteOptions{})
 		if k8serrors.IsNotFound(err) {
