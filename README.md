@@ -1,3 +1,10 @@
+# The changes by jingtao
+* 添加脚本，方便fission的部署和调试，例如CHARTS下的Makefile和根目录下的Makefile
+* 对fission CLI的查看函数日志的功能，添加从当前时间开始读和隐藏时间的功能
+* 允许所有命名空间的fission函数配置使用`fission-secret-configmap`命名空间下的configmap和secret
+* TODO
+    * timetrigger 触发时携带body体，实现对函数更加定制化的周期性调用
+
 # Fission: Serverless Functions for Kubernetes
 
 [![Build Status](https://travis-ci.org/fission/fission.svg?branch=master)](https://travis-ci.org/fission/fission)

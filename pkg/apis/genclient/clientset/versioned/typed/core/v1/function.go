@@ -32,6 +32,7 @@ import (
 // FunctionsGetter has a method to return a FunctionInterface.
 // A group's client should implement this interface.
 type FunctionsGetter interface {
+	// jingtao-note: 接口之后可以深入了解
 	Functions(namespace string) FunctionInterface
 }
 

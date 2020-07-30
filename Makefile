@@ -46,3 +46,10 @@ clean:
 	@rm -f cmd/fission-cli/fission
 	@rm -f cmd/fetcher/fetcher
 	@rm -f cmd/fetcher/builder
+
+
+kt-vpn:
+	sudo ktctl --kubeconfig /home/jingtao/.kube/config --debug connect --method=socks5
+
+kt-exchange_executor:
+	 sudo ktctl --kubeconfig /home/jingtao/.kube/config --namespace fission exchange executor --expose 8888

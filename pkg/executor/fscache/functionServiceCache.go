@@ -45,7 +45,7 @@ const (
 type (
 	FuncSvc struct {
 		Name              string                  // Name of object
-		Function          *metav1.ObjectMeta      // function this pod/service is for
+		Function          *metav1.ObjectMeta      // function this pod/service is for jingtao-note: K8s保留资源的必含内容
 		Environment       *fv1.Environment        // function's environment
 		Address           string                  // Host:Port or IP:Port that the function's service can be reached at.
 		KubernetesObjects []apiv1.ObjectReference // Kubernetes Objects (within the function namespace)

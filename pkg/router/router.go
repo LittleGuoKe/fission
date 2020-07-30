@@ -80,6 +80,7 @@ func router(ctx context.Context, logger *zap.Logger, httpTriggerSet *HTTPTrigger
 
 func serve(ctx context.Context, logger *zap.Logger, port int, tracingSamplingRate float64,
 	httpTriggerSet *HTTPTriggerSet, resolver *functionReferenceResolver, displayAccessLog bool) {
+	// jingtao-note: 创建动态路由表
 	mr := router(ctx, logger, httpTriggerSet, resolver)
 	url := fmt.Sprintf(":%v", port)
 
@@ -112,6 +113,7 @@ func serveMetric(logger *zap.Logger) {
 }
 
 func Start(logger *zap.Logger, port int, executorUrl string) {
+	// jingtao-note: 将一些分析数据进行上传给Fission官网
 	_ = MakeAnalytics("")
 
 	fmap := makeFunctionServiceMap(logger, time.Minute)
@@ -125,7 +127,7 @@ func Start(logger *zap.Logger, port int, executorUrl string) {
 	if err != nil {
 		logger.Fatal("error waiting for CRDs", zap.Error(err))
 	}
-
+	// jingtao-note: 和executor之间的连接
 	executor := executorClient.MakeClient(logger, executorUrl)
 
 	timeoutStr := os.Getenv("ROUTER_ROUND_TRIP_TIMEOUT")
@@ -229,8 +231,10 @@ func Start(logger *zap.Logger, port int, executorUrl string) {
 		svcAddrRetryCount: svcAddrRetryCount,
 	}, isDebugEnv, throttler.MakeThrottler(svcAddrUpdateTimeout))
 
+	// jingtao-note: 类似负载均衡，自动挑选函数 有待验证
 	resolver := makeFunctionReferenceResolver(fnStore)
 
+	// jingtao-note: 打点本地监听端
 	go serveMetric(logger)
 
 	logger.Info("starting router", zap.Int("port", port))

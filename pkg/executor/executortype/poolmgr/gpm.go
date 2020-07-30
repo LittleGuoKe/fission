@@ -224,6 +224,7 @@ func (gpm *GenericPoolManager) RefreshFuncPods(logger *zap.Logger, f fv1.Functio
 		return err
 	}
 
+	// jingtao-note: 删除缓存 记录函数存活时间等信息
 	gp.fsCache.DeleteEntry(funcSvc)
 
 	funcLabels := gp.labelsForFunction(&f.ObjectMeta)
@@ -236,6 +237,7 @@ func (gpm *GenericPoolManager) RefreshFuncPods(logger *zap.Logger, f fv1.Functio
 		return err
 	}
 
+	// jingtao-note: 执行pod的删除操作
 	for _, po := range podList.Items {
 		err := gpm.kubernetesClient.CoreV1().Pods(po.ObjectMeta.Namespace).Delete(po.ObjectMeta.Name, &metav1.DeleteOptions{})
 		if k8serrors.IsNotFound(err) {
@@ -419,7 +421,7 @@ func (gpm *GenericPoolManager) service() {
 
 				// To support backward compatibility, if envs are created in default ns, we go ahead
 				// and create pools in fission-function ns as earlier.
-				ns := gpm.namespace
+				ns := gpm.namespace // jingtao-note: 默认是由启动时传入的函数命名空间
 				if req.env.ObjectMeta.Namespace != metav1.NamespaceDefault {
 					ns = req.env.ObjectMeta.Namespace
 				}

@@ -79,9 +79,11 @@ func makeHTTPTriggerSet(logger *zap.Logger, fmap *functionServiceMap, fissionCli
 	var tController, fnController k8sCache.Controller
 
 	if httpTriggerSet.crdClient != nil {
+		// jingtao-note: 监听k8s中的httptrigger类型的资源
 		tStore, tController = httpTriggerSet.initTriggerController()
 		httpTriggerSet.triggerStore = tStore
 		httpTriggerSet.triggerController = tController
+		// jingtao-note: 同理监听k8s中的function类型的资源
 		fnStore, fnController = httpTriggerSet.initFunctionController()
 		httpTriggerSet.funcStore = fnStore
 		httpTriggerSet.funcController = fnController
@@ -212,8 +214,11 @@ func (ts *HTTPTriggerSet) updateTriggerStatusFailed(ht *fv1.HTTPTrigger, err err
 
 func (ts *HTTPTriggerSet) initTriggerController() (k8sCache.Store, k8sCache.Controller) {
 	resyncPeriod := 30 * time.Second
+	// jingtao-note: 从特定的维度筛选资源
 	listWatch := k8sCache.NewListWatchFromClient(ts.crdClient, "httptriggers", metav1.NamespaceAll, fields.Everything())
+	// jingtao-note: 创建k8s资源变化通知类
 	store, controller := k8sCache.NewInformer(listWatch, &fv1.HTTPTrigger{}, resyncPeriod,
+		// jingtao-note: 通知句柄：资源发生变化时，调用下面的处理函数
 		k8sCache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				trigger := obj.(*fv1.HTTPTrigger)

@@ -224,7 +224,7 @@ func StartExecutor(logger *zap.Logger, functionNamespace string, envBuilderNames
 	if err != nil {
 		return errors.Wrap(err, "Error making fetcher config")
 	}
-
+	// jingtao-note: 生成指定长度的随机字符串
 	executorInstanceID := strings.ToLower(uniuri.NewLen(8))
 
 	logger.Info("Starting executor", zap.String("instanceID", executorInstanceID))
@@ -243,8 +243,10 @@ func StartExecutor(logger *zap.Logger, functionNamespace string, envBuilderNames
 	executorTypes[gpm.GetTypeName()] = gpm
 	executorTypes[ndm.GetTypeName()] = ndm
 
+	// jingtao-note: 是匹配原来的旧资源，还是清理掉旧资源
 	adoptExistingResources, _ := strconv.ParseBool(os.Getenv("ADOPT_EXISTING_RESOURCES"))
 
+	// jingtao-note: WaitGroup 可用于等待goroutines执行结束
 	wg := &sync.WaitGroup{}
 	for _, et := range executorTypes {
 		wg.Add(1)

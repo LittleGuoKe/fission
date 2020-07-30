@@ -26,6 +26,7 @@ import (
 	"github.com/fission/fission/pkg/cache"
 )
 
+// jingtao-note: 将function和function的地址绑定起来
 type (
 	functionServiceMap struct {
 		logger *zap.Logger

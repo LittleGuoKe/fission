@@ -228,6 +228,7 @@ func (roundTripper *RetryingRoundTripper) RoundTrip(req *http.Request) (*http.Re
 			// multiple functions per container, we could use the
 			// function metadata here.
 			// leave the query string intact (req.URL.RawQuery)
+			// jingtao-note: route在做转发的过程中会直接请求函数的跟地址
 			req.URL.Path = "/"
 
 			// Overwrite request host with internal host,
@@ -511,6 +512,7 @@ func (roundTripper RetryingRoundTripper) addForwardedHostHeader(req *http.Reques
 // getServiceEntry is a short-hand for developers to get service url entry that may returns from executor or cache
 func (fh *functionHandler) getServiceEntry() (serviceUrl *url.URL, serviceUrlFromCache bool, err error) {
 	// try to find service url from cache first
+	// jingtao-note: 缓存由functionServiceMap提供支持
 	serviceUrl, err = fh.getServiceEntryFromCache()
 	if err == nil && serviceUrl != nil {
 		return serviceUrl, true, nil
@@ -526,6 +528,7 @@ func (fh *functionHandler) getServiceEntry() (serviceUrl *url.URL, serviceUrlFro
 
 	// Use throttle to limit the total amount of requests sent
 	// to the executor to prevent it from overloaded.
+	// jingtao-note: 在高并发下保证执行的可靠性
 	recordObj, err := fh.svcAddrUpdateThrottler.RunOnce(
 		crd.CacheKey(fnMeta),
 		func(firstToTheLock bool) (interface{}, error) {
@@ -534,6 +537,7 @@ func (fh *functionHandler) getServiceEntry() (serviceUrl *url.URL, serviceUrlFro
 			if firstToTheLock { // first to the service url
 				fh.logger.Debug("calling getServiceForFunction",
 					zap.String("function_name", fnMeta.Name))
+				// jingtao-note: 要求执行器创建一个新函数
 				u, err = fh.getServiceEntryFromExecutor(ctx)
 				if err != nil {
 					fh.logger.Error("error getting service url from executor",
