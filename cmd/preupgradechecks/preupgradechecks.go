@@ -107,14 +107,16 @@ func (client *PreUpgradeTaskClient) VerifyFunctionSpecReferences() {
 	for _, fn := range fList.Items {
 		secrets := fn.Spec.Secrets
 		for _, secret := range secrets {
-			if secret.Namespace != fn.ObjectMeta.Namespace {
+			// jingtao-note: 允许使用公共配置中心下的配置
+			if secret.Namespace != "fission-secret-configmap" && secret.Namespace != fn.ObjectMeta.Namespace {
 				errs = multierror.Append(errs, fmt.Errorf("function : %s.%s cannot reference a secret : %s in namespace : %s", fn.ObjectMeta.Name, fn.ObjectMeta.Namespace, secret.Name, secret.Namespace))
 			}
 		}
 
 		configmaps := fn.Spec.ConfigMaps
 		for _, configmap := range configmaps {
-			if configmap.Namespace != fn.ObjectMeta.Namespace {
+			// jingtao-note: 允许使用公共配置中心下的配置
+			if configmap.Namespace != "fission-secret-configmap" && configmap.Namespace != fn.ObjectMeta.Namespace {
 				errs = multierror.Append(errs, fmt.Errorf("function : %s.%s cannot reference a configmap : %s in namespace : %s", fn.ObjectMeta.Name, fn.ObjectMeta.Namespace, configmap.Name, configmap.Namespace))
 			}
 		}
