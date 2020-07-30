@@ -180,6 +180,7 @@ azureStorageQueue:
   
 ## Kafka: enable and configure the details
 kafka:
+  ## If true, fission will suppose kafka MQTrigger, not to deploy a kafka service
   enabled: false
   # note: below link is only for reference. 
   # Please use the brokers link for your kafka here. 

@@ -1,4 +1,5 @@
 FISSION_NAMESPACE="fission"
+KAFKA_NAMESPACE="development"
 CONTEXT_NAME="minikube"
 TEMPLATE_NAME="fission"
 PROXY=http://hp.jingtao.fun:1080
@@ -9,12 +10,13 @@ DOCKER_HOST="tcp://192.168.99.103:2376"
 DOCKER_CERT_PATH="/home/jingtao/.minikube/certs"
 MINIKUBE_ACTIVE_DOCKERD="minikube"
 
+DEFAULT_TAG="2020-07-30-3"
 FISSION_IMAGE_NAME="jingtao/fission-bundle"
-FISSION_IMAGE_TAG="2020-07-24-1"  # preUpgradeChecksImage 也使用这个tag
+FISSION_IMAGE_TAG=$(DEFAULT_TAG)  # preUpgradeChecksImage 也使用这个tag
 FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
-FISSION_FETCHER_IMAGE_TAG="2020-07-24-1"
+FISSION_FETCHER_IMAGE_TAG=$(DEFAULT_TAG)
 FISSION_PREUPGRADECHECKS_IMAGE_NAME="jingtao/fission-preupgradechecks"
-FISSION_PREUPGRADECHECKS_IMAGE_TAG="2020-07-24-1"
+FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(DEFAULT_TAG)
 
 fission_env_init:tag="2020-07-24-3"
 
@@ -49,37 +51,44 @@ minikube_delete:
 
 
 ## minikube的基础设施环境
-minikube_environment_init: install_localVolume_provisioner rancher_import
+minikube_environment_init: install_localVolume_provisioner rancher_import install_kafka
 
 install_localVolume_provisioner:
-	kubectl --context=$(CONTEXT_NAME) apply -f rancher-local-path-storage.yaml
+	kubectl --context=$(CONTEXT_NAME) apply -f infrastructures/rancher-local-path-storage.yaml
 
 rancher_import:
 	kubectl apply -f https://rancher.huxiang.pro/v3/import/98qghf4j58vrk746qv24wp5b2v8bnz9f4pj8st67tlqzgknznqz7dn.yaml
+
+install_kafka:
+	kubectl --context=$(CONTEXT_NAME) create namespace $(KAFKA_NAMESPACE)
+	https_proxy=$(PROXY) helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
+	https_proxy=$(PROXY) helm --kube-context $(CONTEXT_NAME) install --namespace $(KAFKA_NAMESPACE) install -f infrastructures/kafka-values.yaml \
+		--name-template my-kafka incubator/kafka
 
 
 ## fission的安装
 install_fission: build_all
 	kubectl --context=$(CONTEXT_NAME) create namespace $(FISSION_NAMESPACE)
 	cd fission-all && https_proxy=http://hp.jingtao.fun:1080 helm dependency update && cd -
-	https_proxy=http://hp.jingtao.fun:1080 \
-	helm --kube-context $(CONTEXT_NAME) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
-		 -f minikube-fission-values.yaml \
-		 --set repository= \
-		 --set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
-		 --set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
-		 --set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) \
-		./fission-all
+	https_proxy=$(PROXY) \
+		helm --kube-context $(CONTEXT_NAME) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
+		 	-f minikube-fission-values.yaml \
+		 	--set repository= \
+		 	--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
+		 	--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
+		 	--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) \
+			./fission-all
 	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
 update_fission_image: build_all
-	helm --kube-context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
-		-f minikube-fission-values.yaml \
-		--set repository= \
-		--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
-		--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
-		--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
-		./fission-all
+	https_proxy=$(PROXY) \
+		helm --kube-context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
+			-f minikube-fission-values.yaml \
+			--set repository= \
+			--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
+			--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
+			--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
+			./fission-all
 
 ## fission镜像管理
 # build_fission_bundle build_fission_fetcher build_fission_cli build_fission_preupgradechecks

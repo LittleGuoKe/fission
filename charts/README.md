@@ -1,14 +1,14 @@
-# Fission
+# The changes by jingtao
 
-[Fission](http://fission.io/) is a framework for serverless functions on Kubernetes.
-
-Makefile中提供了使用minikube部署fission的常用命令
+Makefile中提供了使用minikube部署fission的常用命令，还包括一些基础设施例如kafka的部署
 
 资源记录
 * [minikube-localVolume-provisioner.yaml来源](https://github.com/kubernetes-incubator/external-storage/tree/master/local-volume/helm) not work
 * [rancher-local-path-storage.yaml](https://github.com/rancher/local-path-provisioner)
 * [grafana](https://hub.helm.sh/charts/stable/grafana)
 * [prometheus](https://github.com/helm/charts/tree/master/stable/prometheus)
+
+[Fission](http://fission.io/) is a framework for serverless functions on Kubernetes.
 
 
 ## Prerequisites

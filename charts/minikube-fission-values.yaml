@@ -3,7 +3,7 @@ analytics:
 
 kafka:
   enabled: true
-  brokers: kafka.fission-base:9092
+  brokers: my-kafka.development:9092
   version: 5.0.1
 
 routerServiceType: NodePort
