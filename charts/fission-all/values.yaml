@@ -44,7 +44,7 @@ functionNamespace: fission-function
 builderNamespace: fission-builder
 
 ## Namespace in global secrets and configmap
-GlobalSecretConfigmapNamespace: fission-secret-configmap
+globalSecretConfigmapNamespace: fission-secret-configmap
 
 ## Enable istio integration
 enableIstio: false

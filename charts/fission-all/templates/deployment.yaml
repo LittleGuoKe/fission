@@ -27,7 +27,7 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ .Values.GlobalSecretConfigmapNamespace }}
+  name: {{ .Values.globalSecretConfigmapNamespace }}
   labels:
     name: fission-global-secret-configmap-namespace
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -130,7 +130,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fission-function-global-configmap
-  namespace: {{ .Values.GlobalSecretConfigmapNamespace }}
+  namespace: {{ .Values.globalSecretConfigmapNamespace }}
 data:
   "url-pushgateway": fission-prometheus-pushgateway.fission  # 目前不知道怎么获取相关的变量
 
