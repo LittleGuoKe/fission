@@ -18,7 +18,6 @@ FISSION_FETCHER_IMAGE_TAG=$(DEFAULT_TAG)
 FISSION_PREUPGRADECHECKS_IMAGE_NAME="jingtao/fission-preupgradechecks"
 FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(DEFAULT_TAG)
 
-fission_env_init:tag="2020-07-24-3"
 
 ## fission 集群初始化
 init_fission_cluster: minikube_start minikube_environment_init install_fission
@@ -111,12 +110,20 @@ build_fission_cli:
 
 
 ## fission 环境部署
+fission_env_init:tag="2020-08-01-3"
 fission_env_init:
-	fission env delete --name python
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t env/python:$(tag) . && \
-		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest
+		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest --graceperiod 10
+
+## fission 环境更新
+fission_env_update:tag="2020-08-01-6"
+fission_env_update:
+	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
+		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
+		docker build -t env/python:$(tag) . && \
+		fission env update --name python --image env/python:$(tag) --graceperiod 10
 
 ## 代理相关配置
 proxy_all: proxy_fission_grafana proxy_fission_prometheus proxy_fission_pushgateway proxy_fission_router
