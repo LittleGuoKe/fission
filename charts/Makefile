@@ -112,12 +112,11 @@ build_fission_cli:
 
 ## fission 环境部署
 fission_env_init:
-	#fission env delete --name python
-	#fission env delete --name python-chrome
-	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && docker build -t env/python:$(tag) . && \
+	fission env delete --name python
+	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
+		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
+		docker build -t env/python:$(tag) . && \
 		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest
-	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-chrome && docker build -t env/python-chrome:$(tag) . && \
-  		fission env create --name python-chrome --image env/python-chrome:$(tag) --builder fission/python-builder:latest
 
 ## 代理相关配置
 proxy_all: proxy_fission_grafana proxy_fission_prometheus proxy_fission_pushgateway proxy_fission_router
