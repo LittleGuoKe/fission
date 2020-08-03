@@ -132,7 +132,8 @@ metadata:
   name: fission-function-global-configmap
   namespace: {{ .Values.globalSecretConfigmapNamespace }}
 data:
-  "url-pushgateway": fission-prometheus-pushgateway.fission  # 目前不知道怎么获取相关的变量
+  "kafka-broker-list": none
+  "pushgateway-url": fission-prometheus-pushgateway.fission  # 目前不知道怎么获取相关的变量
 
 ---
 apiVersion: apps/v1
