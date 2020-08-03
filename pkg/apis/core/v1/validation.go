@@ -519,6 +519,8 @@ func (spec TimeTriggerSpec) Validate() error {
 
 	result = multierror.Append(result, spec.FunctionReference.Validate())
 
+	// jingtao-note: 此处可以添加验证
+
 	return result.ErrorOrNil()
 }
 

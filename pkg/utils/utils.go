@@ -40,6 +40,7 @@ import (
 )
 
 func UrlForFunction(name, namespace string) string {
+	// jingtao note: trigger 请求函数的路径定义
 	prefix := "/fission-function"
 	if namespace != metav1.NamespaceDefault {
 		prefix = fmt.Sprintf("/fission-function/%s", namespace)

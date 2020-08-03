@@ -685,6 +685,9 @@ type (
 
 		// The reference to function
 		FunctionReference `json:"functionref"`
+
+		// jingtao add the parameter pass to function
+		Parameter string `json:"parameter"`
 	}
 
 	FailureType string

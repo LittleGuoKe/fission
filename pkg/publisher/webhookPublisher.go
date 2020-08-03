@@ -79,6 +79,7 @@ func (p *WebhookPublisher) svc() {
 }
 
 func (p *WebhookPublisher) makeHttpRequest(r *publishRequest) {
+	// jingtao note: time trigger 使用的触发函数的功能, (暂时确认只有time trigger调用过)
 	url := p.baseUrl + "/" + strings.TrimPrefix(r.target, "/")
 
 	msg := "making HTTP request"
