@@ -133,7 +133,7 @@ metadata:
   namespace: {{ .Values.globalSecretConfigmapNamespace }}
 data:
   "kafka-broker-list": none
-  "pushgateway-url": fission-prometheus-pushgateway.fission  # 目前不知道怎么获取相关的变量
+  "pushgateway-url": fission-prometheus-pushgateway.fission:9091  # 目前不知道怎么获取相关的变量
 
 ---
 apiVersion: apps/v1
