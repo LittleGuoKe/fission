@@ -6,7 +6,7 @@ PROXY=http://hp.jingtao.fun:1080
 
 # docker environment from `minikube docker-env`
 DOCKER_TLS_VERIFY="1"
-DOCKER_HOST="tcp://192.168.99.103:2376"
+DOCKER_HOST="tcp://192.168.99.104:2376"
 DOCKER_CERT_PATH="/home/jingtao/.minikube/certs"
 MINIKUBE_ACTIVE_DOCKERD="minikube"
 
@@ -25,15 +25,17 @@ init_fission_cluster: minikube_start minikube_environment_init install_fission
 
 ## minikube的运维命令
 minikube_start:
-	https_proxy=$(PROXY) http_proxy=$(PROXY) no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24 \
+	HTTPS_PROXY=$(PROXY) HTTP_PROXY=$(PROXY) NO_PROXY=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24,192.168.50.0/24 \
 		minikube start \
 			--docker-env http_proxy=$(PROXY) \
 			--docker-env https_proxy=$(PROXY) \
-			--docker-env no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24 \
+			--docker-env no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24,192.168.50.0/24 \
 			--addons=metrics-server \
 			--addons=storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
 			--driver=virtualbox \
+			--image-mirror-country='cn' \
+			--image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' \
 			--cpus=6 \
 			--memory=8g \
 			--disk-size=40g \
@@ -61,7 +63,7 @@ rancher_import:
 install_kafka:
 	kubectl --context=$(CONTEXT_NAME) create namespace $(KAFKA_NAMESPACE)
 	https_proxy=$(PROXY) helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
-	https_proxy=$(PROXY) helm --kube-context $(CONTEXT_NAME) install --namespace $(KAFKA_NAMESPACE) install -f infrastructures/kafka-values.yaml \
+	https_proxy=$(PROXY) helm --kube-context $(CONTEXT_NAME) install --namespace $(KAFKA_NAMESPACE) -f infrastructures/kafka-values.yaml \
 		--name-template my-kafka incubator/kafka
 
 
@@ -118,7 +120,7 @@ fission_env_init:
 		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest --graceperiod 10
 
 ## fission 环境更新
-fission_env_update:tag="2020-08-01-6"
+fission_env_update:tag="2020-08-04-3"
 fission_env_update:
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
@@ -144,8 +146,11 @@ proxy_fission_prometheus:
 
 proxy_fission_pushgateway:
 	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-pushgateway 9091 --address 0.0.0.0 &
-	echo "fission pushgateway map to 0.0.0.0:9090"
+	echo "fission pushgateway map to 0.0.0.0:9091"
 
+proxy_fission_alertmanager:
+	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-alertmanager 9093 --address 0.0.0.0 &
+	echo "fission alertmanager map to 0.0.0.0:9093"
 
 ## 卸载
 uninstall_fission:
