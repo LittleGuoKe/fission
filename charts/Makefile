@@ -34,8 +34,6 @@ minikube_start:
 			--addons=storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
 			--driver=virtualbox \
-			--image-mirror-country='cn' \
-			--image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' \
 			--cpus=6 \
 			--memory=8g \
 			--disk-size=40g \
