@@ -53,3 +53,6 @@ kt-vpn:
 
 kt-exchange_executor:
 	 sudo ktctl --kubeconfig /home/jingtao/.kube/config --namespace fission exchange executor --expose 8888
+
+ kt-exchange_controller:
+	 sudo ktctl --kubeconfig /home/jingtao/.kube/config --namespace fission exchange controller --expose 8888:8889

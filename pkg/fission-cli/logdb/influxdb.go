@@ -133,6 +133,7 @@ func (influx InfluxDB) GetLogs(filter LogFilter) ([]LogEntry, error) {
 	return logEntries, nil
 }
 
+// jingtao-note: 通过controller的代理转发获取日志信息
 func (influx InfluxDB) query(query influxdbClient.Query) (*influxdbClient.Response, error) {
 	queryURL, err := url.Parse(influx.endpoint)
 	if err != nil {

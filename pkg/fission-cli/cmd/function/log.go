@@ -82,17 +82,19 @@ func (opts *LogSubCommand) do(input cli.Input) error {
 		} else {
 			t = time.Unix(0, 0*int64(time.Millisecond))
 		}
+		podName := "none"
 		var cstSh, _ = time.LoadLocation("Asia/Shanghai") //上海
 		for {
 			select {
 			case <-requestChan:
 				logFilter := logdb.LogFilter{
-					Pod:         fnPod,
-					Function:    f.ObjectMeta.Name,
-					FuncUid:     string(f.ObjectMeta.UID),
-					Since:       t,
-					Reverse:     logReverseQuery,
-					RecordLimit: recordLimit,
+					Pod:               fnPod,
+					Function:          f.ObjectMeta.Name,
+					FunctionNamespace: f.ObjectMeta.Namespace,
+					FuncUid:           string(f.ObjectMeta.UID),
+					Since:             t,
+					Reverse:           logReverseQuery,
+					RecordLimit:       recordLimit,
 				}
 				logEntries, err := logDB.GetLogs(logFilter)
 				if err != nil {
@@ -101,6 +103,11 @@ func (opts *LogSubCommand) do(input cli.Input) error {
 					return
 				}
 				for _, logEntry := range logEntries {
+					t = logEntry.Timestamp
+					if podName != logEntry.Pod {
+						podName = logEntry.Pod
+						fmt.Printf("\n**** logs from %v ****\n\n", podName)
+					}
 					if input.Bool(flagkey.FnLogDetail) {
 						if input.Bool(flagkey.FnLogWithTime) {
 							fmt.Printf("Timestamp: %s\nNamespace: %s\nFunction Name: %s\nFunction ID: %s\nPod: %s\nContainer: %s\nStream: %s\nLog: %s\n---\n",
@@ -115,9 +122,7 @@ func (opts *LogSubCommand) do(input cli.Input) error {
 						} else {
 							fmt.Printf("%s\n", logEntry.Message)
 						}
-
 					}
-					t = logEntry.Timestamp
 				}
 				responseChan <- struct{}{}
 			case <-ctx.Done():
