@@ -20,24 +20,25 @@ FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(DEFAULT_TAG)
 
 
 ## fission 集群初始化
-init_fission_cluster: minikube_start minikube_environment_init install_fission
+init_fission_cluster: minikube_start minikube_environment_init install_fission fission_env_init
 
 
 ## minikube的运维命令
 minikube_start:
 	HTTPS_PROXY=$(PROXY) HTTP_PROXY=$(PROXY) NO_PROXY=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24,192.168.50.0/24 \
 		minikube start \
+			--profile $(CONTEXT_NAME) \
 			--docker-env http_proxy=$(PROXY) \
 			--docker-env https_proxy=$(PROXY) \
 			--docker-env no_proxy=localhost,127.0.0.1,10.96.0.0/12,192.168.99.0/24,192.168.39.0/24,192.168.50.0/24 \
-			--addons=metrics-server \
-			--addons=storage-provisioner-gluster \
+			--addons metrics-server \
+			--addons storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
-			--driver=virtualbox \
-			--cpus=6 \
-			--memory=8g \
-			--disk-size=40g \
-			--container-runtime=docker
+			--driver virtualbox \
+			--cpus 6 \
+			--memory 8g \
+			--disk-size 40g \
+			--container-runtime docker
 
 minikube_dashboard:
 	minikube dashboard
@@ -50,10 +51,19 @@ minikube_delete:
 
 
 ## minikube的基础设施环境
-minikube_environment_init: install_localVolume_provisioner rancher_import install_kafka
+minikube_environment_init: install_localVolume_provisioner install_nfs_provisioner rancher_import install_kafka
 
 install_localVolume_provisioner:
 	kubectl --context=$(CONTEXT_NAME) apply -f infrastructures/rancher-local-path-storage.yaml
+
+install_nfs_provisioner:
+	# https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner
+	https_proxy=$(PROXY) \
+		helm repo add stable https://kubernetes-charts.storage.googleapis.com && \
+		helm repo update && \
+		helm install --name-template helm-nfs-provisioner --set nfs.server=hp.jingtao.fun --set nfs.path=/k8s \
+		--set nfs.mountOptions="{vers=4,port=2049}" \
+		stable/nfs-client-provisioner
 
 rancher_import:
 	kubectl apply -f https://rancher.huxiang.pro/v3/import/98qghf4j58vrk746qv24wp5b2v8bnz9f4pj8st67tlqzgknznqz7dn.yaml
