@@ -6,11 +6,11 @@ PROXY=http://hp.jingtao.fun:1080
 
 # docker environment from `minikube docker-env`
 DOCKER_TLS_VERIFY="1"
-DOCKER_HOST="tcp://192.168.99.104:2376"
+DOCKER_HOST="tcp://192.168.99.114:2376"
 DOCKER_CERT_PATH="/home/jingtao/.minikube/certs"
 MINIKUBE_ACTIVE_DOCKERD="minikube"
 
-DEFAULT_TAG="2020-07-30-3"
+DEFAULT_TAG="2020-08-03-2"
 FISSION_IMAGE_NAME="jingtao/fission-bundle"
 FISSION_IMAGE_TAG=$(DEFAULT_TAG)  # preUpgradeChecksImage 也使用这个tag
 FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
@@ -35,7 +35,7 @@ minikube_start:
 			--addons storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
 			--driver virtualbox \
-			--cpus 6 \
+			--cpus 8 \
 			--memory 8g \
 			--disk-size 40g \
 			--container-runtime docker
@@ -66,7 +66,7 @@ install_nfs_provisioner:
 		stable/nfs-client-provisioner
 
 rancher_import:
-	kubectl apply -f https://rancher.huxiang.pro/v3/import/98qghf4j58vrk746qv24wp5b2v8bnz9f4pj8st67tlqzgknznqz7dn.yaml
+	kubectl apply -f https://rancher.huxiang.pro/v3/import/qrthth9tbmjxnn4wdhg5jlhgmv6j4xf2drqkksskzq25xl7ht4d64x.yaml
 
 install_kafka:
 	kubectl --context=$(CONTEXT_NAME) create namespace $(KAFKA_NAMESPACE)
