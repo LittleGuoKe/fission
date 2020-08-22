@@ -58,10 +58,11 @@ install_localVolume_provisioner:
 
 install_nfs_provisioner:
 	# https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner
+	kubectl create namespace storage-nfs
 	https_proxy=$(PROXY) \
 		helm repo add stable https://kubernetes-charts.storage.googleapis.com && \
 		helm repo update && \
-		helm install --name-template helm-nfs-provisioner --set nfs.server=hp.jingtao.fun --set nfs.path=/k8s \
+		helm install --namespace storage-nfs --name-template helm-nfs-provisioner --set nfs.server=hp.jingtao.fun --set nfs.path=/k8s \
 		--set nfs.mountOptions="{vers=4,port=2049}" \
 		stable/nfs-client-provisioner
 
