@@ -17,7 +17,8 @@ FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
 FISSION_FETCHER_IMAGE_TAG=$(DEFAULT_TAG)
 FISSION_PREUPGRADECHECKS_IMAGE_NAME="jingtao/fission-preupgradechecks"
 FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(DEFAULT_TAG)
-
+FISSION_FLUENTD_WRAPPER_IMAGE_NAME="jingtao/fission-fluentd-wrapper"
+FISSION_FLUENTD_WRAPPER_IMAGE_TAG=$(DEFAULT_TAG)
 
 ## fission 集群初始化
 init_fission_cluster: minikube_start minikube_environment_init install_fission fission_env_init
@@ -84,8 +85,10 @@ install_fission: build_all
 		helm --kube-context $(CONTEXT_NAME) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
 		 	-f minikube-fission-values.yaml \
 		 	--set repository= \
+		 	--set logger.fluentdImageRepository= \
 		 	--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
 		 	--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
+		 	--set logger.fluentdImage=$(FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
 		 	--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) \
 			./fission-all
 	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
@@ -95,14 +98,16 @@ update_fission_image: build_all
 		helm --kube-context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
 			-f minikube-fission-values.yaml \
 			--set repository= \
+			--set logger.fluentdImageRepository= \
 			--set image=$(FISSION_IMAGE_NAME),imageTag=$(FISSION_IMAGE_TAG) \
 			--set fetcher.image=$(FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(FISSION_FETCHER_IMAGE_TAG) \
+		 	--set logger.fluentdImage=$(FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
 			--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
 			./fission-all
 
 ## fission镜像管理
 # build_fission_bundle build_fission_fetcher build_fission_cli build_fission_preupgradechecks
-build_all: build_fission_bundle build_fission_fetcher build_fission_preupgradechecks build_fission_cli
+build_all: build_fission_bundle build_fission_fetcher build_fission_preupgradechecks build_fission_cli build_fluentd_wrapper
 
 build_fission_bundle:
 	DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
@@ -115,6 +120,10 @@ build_fission_fetcher:
 build_fission_preupgradechecks:
 	DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t $(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) -f ../cmd/preupgradechecks/Dockerfile.fission-preupgradechecks ../
+
+build_fluentd_wrapper:
+		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
+    		docker build -t $(FISSION_FLUENTD_WRAPPER_IMAGE_NAME):$(FISSION_FLUENTD_WRAPPER_IMAGE_TAG) -f ../cmd/fluentd-wrapper/Dockerfile.fluentd-wrapper ../
 
 build_fission_cli:
 	cd ../cmd/fission-cli && go build -o ~/go/bin/fission

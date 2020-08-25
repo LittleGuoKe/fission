@@ -1,7 +1,9 @@
-package axes
+package wrapper
 
 import (
+	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/exec"
@@ -13,12 +15,12 @@ var (
 	fluentd *exec.Cmd
 )
 
-func StartFluentd(config string) error {
+func StartFluentd(zapLogger *zap.Logger) error {
 	if fluentd != nil {
-		return fmt.Errorf("fluentd already started")
+		return errors.New("fluentd already started")
 	}
-	log.Println("start fluentd")
-	fluentd = exec.Command("fluentd", "-c", config)
+	zapLogger.Info("start fluentd")
+	fluentd = exec.Command("fluentd", "-c", "/fluentd/etc/fluent.conf")
 	fluentd.Stderr = os.Stderr
 	fluentd.Stdout = os.Stdout
 	return fluentd.Start()
@@ -31,10 +33,6 @@ func shell(command string) string {
 		fmt.Printf("error %v", err)
 	}
 	return string(out)
-}
-
-func KillFluentd() error {
-	return fluentd.Process.Signal(syscall.SIGINT)
 }
 
 var loadCh = make(chan int, 1)
@@ -50,7 +48,7 @@ func ReloadFluentd() error {
 			command := fmt.Sprintf("pgrep -P %d", fluentd.Process.Pid)
 			childID := shell(command)
 			log.Printf("before reload childId : %s", childID)
-			fluentd.Process.Signal(syscall.SIGHUP)
+			fluentd.Process.Signal(syscall.SIGUSR2)
 			time.Sleep(5 * time.Second)
 			afterChildID := shell(command)
 			log.Printf("after reload childId : %s", afterChildID)
@@ -64,20 +62,4 @@ func ReloadFluentd() error {
 		return fmt.Errorf("fluentd is reloading")
 	}
 	return nil
-}
-
-func FluentdWatcher() chan int {
-	ch := make(chan int)
-	go func() {
-		err := fluentd.Wait()
-		if err != nil {
-			log.Printf("fluentd daemon exit with error %v", err)
-			ch <- 1
-		} else {
-			log.Printf("fluentd daemon exit")
-			ch <- 0
-		}
-		close(ch)
-	}()
-	return ch
 }

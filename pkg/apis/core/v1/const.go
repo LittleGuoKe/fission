@@ -139,15 +139,23 @@ const (
 	SecretConfigMapGetterCR = "secret-configmap-getter"
 	SecretConfigMapGetterRB = "secret-configmap-getter-binding"
 
+	PackageGetterCR = "package-getter"
+	PackageGetterRB = "package-getter-binding"
+
+	ClusterRole = "ClusterRole"
+)
+
+const (
 	// jingtao add 全局配置所在的命名空间
 	GlobalSecretConfigMapNS = "fission-secret-configmap"
 	// jingtao add Cluster Role 在fission安装时添加的权限,复用fission自带的权限
 	GlobalSecretConfigMapGetterCR = "secret-configmap-getter"
 	// jingtao add 绑定服务帐号和角色之间的关系
 	GlobalSecretConfigMapGetterRB = "global-secret-configmap-getter-binding"
-
-	PackageGetterCR = "package-getter"
-	PackageGetterRB = "package-getter-binding"
-
-	ClusterRole = "ClusterRole"
+	// jingtao add 日志输出配置的configmap名称
+	LogCollectionConfigName = "fission-log-collection-config"
+	// jingtao add 函数配置中的指明使用的日志输出的方式
+	LogCollectionConfigKey = "log-collection-type"
+	// jingtao add 只有函数使用的此命名规则的configMap可以携带日志的输出方式
+	LogConfigMapName = "func-%s"
 )

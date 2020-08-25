@@ -134,14 +134,17 @@ metadata:
 data:
   "kafka-1": |-
     <store>
-    @type kafka_buffered
+      @type kafka2
     brokers my-kafka.development:9092
     default_topic demo
-      <buffer>
-        flush_mode interval
-        retry_type exponential_backoff
-        flush_interval 3
-      </buffer>
+    <format>
+      @type json
+    </format>
+    <buffer>
+      flush_mode interval
+      retry_type exponential_backoff
+      flush_interval 3
+    </buffer>
     </store>
 
 ---
@@ -152,7 +155,7 @@ metadata:
   namespace: {{ .Values.globalSecretConfigmapNamespace }}
 data:
   "kafka-broker-list": my-kafka.development:9092
-  "pushgateway-url": fission-prometheus-pushgateway.fission:9091  # 目前不知道怎么获取相关的变量
+  "pushgateway-url": {{ .Release.Name }}-prometheus-pushgateway.fission:9091
 
 ---
 apiVersion: apps/v1
