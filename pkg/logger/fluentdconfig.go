@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"fmt"
 	fv1 "github.com/fission/fission/pkg/apis/core/v1"
 	"github.com/fission/fission/pkg/cache"
@@ -16,6 +17,7 @@ import (
 	k8sCache "k8s.io/client-go/tools/cache"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -34,6 +36,13 @@ const (
         @type json
     </parse>
 </source>
+
+<filter %s>
+    @type record_transformer             
+    <record>
+        tag ${tag}
+    </record>
+</filter>
 
 <match %s>
 	@type copy
@@ -70,6 +79,19 @@ func makeFluentdGen(zapLogger *zap.Logger, k8sClientSet *kubernetes.Clientset, f
 	}, nil
 }
 
+func formatConfig(tpl string, function *fv1.Function) (string, error) {
+	tmpl, err := template.New("xx").Parse(tpl)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, function)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 func (fg *FluentdGen) server() {
 	// run controller
 	funcController := fg.makeFunctionChangeController()
@@ -100,13 +122,22 @@ func (fg *FluentdGen) writeFluentdConfig(function *fv1.Function, logConfigs []st
 	logPath := fmt.Sprintf("%s/%s_%s_*", fissionSymlinkPath, function.ObjectMeta.Namespace, function.ObjectMeta.Name)
 	posPath := fmt.Sprintf(fluentdPosPathTemplate, function.ObjectMeta.Namespace, function.ObjectMeta.Name)
 	tag := fmt.Sprintf("%s.%s", function.ObjectMeta.Namespace, function.ObjectMeta.Name)
-	output := strings.Join(logConfigs, "\n")
-	configContent := fmt.Sprintf(configTemplate, logPath, posPath, tag, tag, output)
+	// logConfigs can have some variable, so it need to construct.
+	var formatLogConfigs []string
+	for _, lc := range logConfigs {
+		flc, err := formatConfig(lc, function)
+		if err != nil {
+			fg.zapLogger.Error(fmt.Sprintf("format config error: %v, functionNamespace: %s, function:%s template: %s", err, function.ObjectMeta.Namespace, function.ObjectMeta.Name, lc))
+		}
+		formatLogConfigs = append(formatLogConfigs, flc)
+	}
+	output := strings.Join(formatLogConfigs, "\n")
+	configContent := fmt.Sprintf(configTemplate, logPath, posPath, tag, tag, tag, output)
 	funcConfigPath := fmt.Sprintf(configsPathTemplate, function.ObjectMeta.Namespace+"_"+function.ObjectMeta.Name+".conf")
 	fg.zapLogger.Debug(fmt.Sprintf("%s %s update config", function.ObjectMeta.Namespace, function.ObjectMeta.Name))
 	// 直接写入
 	fg.timer.Update(func() {
-		if len(logConfigs) == 0 {
+		if len(formatLogConfigs) == 0 {
 			// delete the file if it exists
 			err := os.Remove(funcConfigPath)
 			if err != nil {

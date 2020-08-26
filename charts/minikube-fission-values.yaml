@@ -8,6 +8,9 @@ kafka:
 
 routerServiceType: NodePort
 
+influxdb:
+  enabled: false
+
 prometheus:
   enabled: true
   alertmanager:
