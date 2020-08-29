@@ -3,14 +3,15 @@ KAFKA_NAMESPACE="development"
 CONTEXT_NAME="minikube"
 TEMPLATE_NAME="fission"
 PROXY=http://hp.jingtao.fun:1080
+TODAY=$(shell date "+%Y_%m_%d")
 
 # docker environment from `minikube docker-env`
 DOCKER_TLS_VERIFY="1"
-DOCKER_HOST="tcp://192.168.99.114:2376"
+DOCKER_HOST="tcp://192.168.39.6:2376"
 DOCKER_CERT_PATH="/home/jingtao/.minikube/certs"
 MINIKUBE_ACTIVE_DOCKERD="minikube"
 
-DEFAULT_TAG="2020-08-03-2"
+DEFAULT_TAG="$(TODAY)-1"
 FISSION_IMAGE_NAME="jingtao/fission-bundle"
 FISSION_IMAGE_TAG=$(DEFAULT_TAG)  # preUpgradeChecksImage 也使用这个tag
 FISSION_FETCHER_IMAGE_NAME="jingtao/fission-fetcher"
@@ -19,9 +20,6 @@ FISSION_PREUPGRADECHECKS_IMAGE_NAME="jingtao/fission-preupgradechecks"
 FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(DEFAULT_TAG)
 FISSION_FLUENTD_WRAPPER_IMAGE_NAME="jingtao/fission-fluentd-wrapper"
 FISSION_FLUENTD_WRAPPER_IMAGE_TAG=$(DEFAULT_TAG)
-
-## fission 集群初始化
-init_fission_cluster: minikube_start minikube_environment_init install_fission fission_env_init
 
 
 ## minikube的运维命令
@@ -35,20 +33,24 @@ minikube_start:
 			--addons metrics-server \
 			--addons storage-provisioner-gluster \
 			--kubernetes-version v1.18.3 \
-			--driver virtualbox \
+			--driver kvm2 \
 			--cpus 8 \
 			--memory 8g \
 			--disk-size 40g \
 			--container-runtime docker
 
 minikube_dashboard:
-	minikube dashboard
+	minikube dashboard --profile $(CONTEXT_NAME)
 
 minikube_stop:
-	minikube stop
+	minikube stop --profile $(CONTEXT_NAME)
 
 minikube_delete:
-	minikube delete
+	minikube delete --profile $(CONTEXT_NAME)
+
+
+## fission 集群初始化
+init_fission_cluster: minikube_environment_init install_fission fission_env_init
 
 
 ## minikube的基础设施环境
@@ -130,7 +132,7 @@ build_fission_cli:
 
 
 ## fission 环境部署
-fission_env_init:tag="2020-08-01-3"
+fission_env_init:tag="$(TODAY)-1"
 fission_env_init:
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
@@ -138,7 +140,7 @@ fission_env_init:
 		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest --graceperiod 10
 
 ## fission 环境更新
-fission_env_update:tag="2020-08-04-3"
+fission_env_update:tag="$(TODAY)-1"
 fission_env_update:
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
