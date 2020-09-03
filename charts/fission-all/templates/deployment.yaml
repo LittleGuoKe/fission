@@ -688,7 +688,7 @@ spec:
     spec:
       containers:
       - name: mqtrigger
-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+        image: {{ include "fission-bundleImage" . | quote }}
         imagePullPolicy: {{ .Values.pullPolicy }}
         command: ["/fission-bundle"]
         args: ["--mqt", "--routerUrl", "http://router.{{ .Release.Namespace }}"]
