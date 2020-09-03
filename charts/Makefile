@@ -57,15 +57,15 @@ init_fission_cluster: minikube_environment_init install_fission fission_env_init
 minikube_environment_init: install_localVolume_provisioner install_nfs_provisioner rancher_import install_kafka
 
 install_localVolume_provisioner:
-	kubectl --context=$(CONTEXT_NAME) apply -f infrastructures/rancher-local-path-storage.yaml
+	kubectl --context $(CONTEXT_NAME) apply -f infrastructures/rancher-local-path-storage.yaml
 
 install_nfs_provisioner:
 	# https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner
-	kubectl create namespace storage-nfs
+	kubectl --context $(CONTEXT_NAME) create namespace storage-nfs
 	https_proxy=$(PROXY) \
 		helm repo add stable https://kubernetes-charts.storage.googleapis.com && \
 		helm repo update && \
-		helm install --namespace storage-nfs --name-template helm-nfs-provisioner --set nfs.server=hp.jingtao.fun --set nfs.path=/k8s \
+		helm --kube-context $(CONTEXT_NAME) install --namespace storage-nfs --name-template helm-nfs-provisioner --set nfs.server=hp.jingtao.fun --set nfs.path=/k8s \
 		--set nfs.mountOptions="{vers=4,port=2049}" \
 		stable/nfs-client-provisioner
 
@@ -73,7 +73,7 @@ rancher_import:
 	kubectl apply -f https://rancher.huxiang.pro/v3/import/qrthth9tbmjxnn4wdhg5jlhgmv6j4xf2drqkksskzq25xl7ht4d64x.yaml
 
 install_kafka:
-	kubectl --context=$(CONTEXT_NAME) create namespace $(KAFKA_NAMESPACE)
+	kubectl --context $(CONTEXT_NAME) create namespace $(KAFKA_NAMESPACE)
 	https_proxy=$(PROXY) helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
 	https_proxy=$(PROXY) helm --kube-context $(CONTEXT_NAME) install --namespace $(KAFKA_NAMESPACE) -f infrastructures/kafka-values.yaml \
 		--name-template my-kafka incubator/kafka
@@ -81,7 +81,7 @@ install_kafka:
 
 ## fission的安装
 install_fission: build_all
-	kubectl --context=$(CONTEXT_NAME) create namespace $(FISSION_NAMESPACE)
+	kubectl --context $(CONTEXT_NAME) create namespace $(FISSION_NAMESPACE)
 	cd fission-all && https_proxy=http://hp.jingtao.fun:1080 helm dependency update && cd -
 	https_proxy=$(PROXY) \
 		helm --kube-context $(CONTEXT_NAME) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
@@ -93,7 +93,7 @@ install_fission: build_all
 		 	--set logger.fluentdImage=$(FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
 		 	--set preUpgradeChecksImage=$(FISSION_PREUPGRADECHECKS_IMAGE_NAME):$(FISSION_PREUPGRADECHECKS_IMAGE_TAG) \
 			./fission-all
-	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+	kubectl --context $(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
 update_fission_image: build_all
 	https_proxy=$(PROXY) \
@@ -156,20 +156,20 @@ proxy_fission_router:
 
 proxy_fission_grafana:
 	echo "grafana admin password:"
-	kubectl --context=$(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-grafana 3000 --address 0.0.0.0 &
+	kubectl --context $(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+	kubectl --context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-grafana 3000 --address 0.0.0.0 &
 	echo "fission grafana map to 0.0.0.0:3000"
 
 proxy_fission_prometheus:
-	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-server 9090:80 --address 0.0.0.0 &
+	kubectl --context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-server 9090:80 --address 0.0.0.0 &
 	echo "fission prometheus map to 0.0.0.0:9090"
 
 proxy_fission_pushgateway:
-	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-pushgateway 9091 --address 0.0.0.0 &
+	kubectl --context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-pushgateway 9091 --address 0.0.0.0 &
 	echo "fission pushgateway map to 0.0.0.0:9091"
 
 proxy_fission_alertmanager:
-	kubectl --context=$(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-alertmanager 9093 --address 0.0.0.0 &
+	kubectl --context $(CONTEXT_NAME) --namespace $(FISSION_NAMESPACE) port-forward service/fission-prometheus-alertmanager 9093 --address 0.0.0.0 &
 	echo "fission alertmanager map to 0.0.0.0:9093"
 
 ## 卸载
