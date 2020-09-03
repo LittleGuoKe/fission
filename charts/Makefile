@@ -177,3 +177,42 @@ uninstall_fission:
 	helm --kube-context $(CONTEXT_NAME) uninstall $(TEMPLATE_NAME) --namespace $(FISSION_NAMESPACE)
 	#kubectl --kube-context $(CONTEXT_NAME) delete namespace $(FISSION_NAMESPACE)
 
+PUBLIC_CONTEXT=js
+PUBLIC_DEFAULT_TAG="v4"
+PUBLIC_FISSION_IMAGE_NAME="fuxing/fission-bundle"
+PUBLIC_FISSION_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)  # preUpgradeChecksImage 也使用这个tag
+PUBLIC_FISSION_FETCHER_IMAGE_NAME="fuxing/fission-fetcher"
+PUBLIC_FISSION_FETCHER_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)
+PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME="fuxing/fission-preupgradechecks"
+PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)
+PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME="fuxing/fission-fluentd-wrapper"
+PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)
+
+
+## fission的安装
+install_fission_public:
+	kubectl --context $(PUBLIC_CONTEXT) create namespace $(FISSION_NAMESPACE)
+	cd fission-all && https_proxy=http://hp.jingtao.fun:1080 helm dependency update && cd -
+	https_proxy=$(PROXY) \
+		helm --kube-context $(PUBLIC_CONTEXT) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
+		 	-f minikube-fission-values.yaml \
+			--set repository=ml.jingtao.fun \
+			--set logger.fluentdImageRepository=ml.jingtao.fun \
+			--set image=$(PUBLIC_FISSION_IMAGE_NAME),imageTag=$(PUBLIC_FISSION_IMAGE_TAG) \
+			--set fetcher.image=ml.jingtao.fun/$(PUBLIC_FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(PUBLIC_FISSION_FETCHER_IMAGE_TAG) \
+			--set logger.fluentdImage=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
+			--set preUpgradeChecksImage=ml.jingtao.fun/$(PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
+			./fission-all
+	kubectl --context $(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+update_fission_image_public:
+	https_proxy=$(PROXY) \
+		helm --kube-context $(PUBLIC_CONTEXT) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
+			-f minikube-fission-values.yaml \
+			--set repository=ml.jingtao.fun \
+			--set logger.fluentdImageRepository=ml.jingtao.fun \
+			--set image=$(PUBLIC_FISSION_IMAGE_NAME),imageTag=$(PUBLIC_FISSION_IMAGE_TAG) \
+			--set fetcher.image=ml.jingtao.fun/$(PUBLIC_FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(PUBLIC_FISSION_FETCHER_IMAGE_TAG) \
+			--set logger.fluentdImage=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
+			--set preUpgradeChecksImage=ml.jingtao.fun/$(PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
+			./fission-all
