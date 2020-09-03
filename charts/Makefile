@@ -137,7 +137,7 @@ fission_env_init:
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t env/python:$(tag) . && \
-		fission env create --name python --image env/python:$(tag) --builder fission/python-builder:latest --graceperiod 10
+		fission --kube-context $(CONTEXT_NAME) env create --name python --image env/python:$(tag) --builder fission/python-builder:latest --graceperiod 10
 
 ## fission 环境更新
 fission_env_update:tag="$(TODAY)-1"
@@ -145,7 +145,7 @@ fission_env_update:
 	cd /home/jingtao/Fuxing/fissions/fission-envs/env/python/python3-base && \
 		DOCKER_TLS_VERIFY=$(DOCKER_TLS_VERIFY) DOCKER_HOST=$(DOCKER_HOST) DOCKER_CERT_PATH=$(DOCKER_CERT_PATH) MINIKUBE_ACTIVE_DOCKERD=$(MINIKUBE_ACTIVE_DOCKERD) \
 		docker build -t env/python:$(tag) . && \
-		fission env update --name python --image env/python:$(tag) --graceperiod 10
+		fission --kube-context $(CONTEXT_NAME) env update --name python --image env/python:$(tag) --graceperiod 10
 
 ## 代理相关配置
 proxy_all: proxy_fission_grafana proxy_fission_prometheus proxy_fission_pushgateway proxy_fission_router
@@ -179,6 +179,7 @@ uninstall_fission:
 
 PUBLIC_CONTEXT=js
 PUBLIC_DEFAULT_TAG="v4"
+PUBLIC_REPO=ml.jingtao.fun
 PUBLIC_FISSION_IMAGE_NAME="fuxing/fission-bundle"
 PUBLIC_FISSION_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)  # preUpgradeChecksImage 也使用这个tag
 PUBLIC_FISSION_FETCHER_IMAGE_NAME="fuxing/fission-fetcher"
@@ -187,7 +188,8 @@ PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME="fuxing/fission-preupgradechecks"
 PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)
 PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME="fuxing/fission-fluentd-wrapper"
 PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG=$(PUBLIC_DEFAULT_TAG)
-
+PUBLIC_FISSION_ENV_PYTHON_IMAGE_NAME="fuxing/env/python"
+PUBLIC_FISSION_ENV_PYTHON_IMAGE_TAG="v4"
 
 ## fission的安装
 install_fission_public:
@@ -196,23 +198,25 @@ install_fission_public:
 	https_proxy=$(PROXY) \
 		helm --kube-context $(PUBLIC_CONTEXT) install --namespace $(FISSION_NAMESPACE) --name-template $(TEMPLATE_NAME) \
 		 	-f minikube-fission-values.yaml \
-			--set repository=ml.jingtao.fun \
-			--set logger.fluentdImageRepository=ml.jingtao.fun \
+			--set repository=$(PUBLIC_REPO) \
+			--set logger.fluentdImageRepository=$(PUBLIC_REPO) \
 			--set image=$(PUBLIC_FISSION_IMAGE_NAME),imageTag=$(PUBLIC_FISSION_IMAGE_TAG) \
 			--set fetcher.image=ml.jingtao.fun/$(PUBLIC_FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(PUBLIC_FISSION_FETCHER_IMAGE_TAG) \
 			--set logger.fluentdImage=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
 			--set preUpgradeChecksImage=ml.jingtao.fun/$(PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
 			./fission-all
 	kubectl --context $(CONTEXT_NAME) get secret --namespace $(FISSION_NAMESPACE) fission-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+	fission --kube-context $(PUBLIC_CONTEXT) env create --name python --image $(PUBLIC_REPO)/$(PUBLIC_FISSION_ENV_PYTHON_IMAGE_NAME):$(PUBLIC_FISSION_ENV_PYTHON_IMAGE_TAG) --builder fission/python-builder:latest --graceperiod 10
 
 update_fission_image_public:
 	https_proxy=$(PROXY) \
 		helm --kube-context $(PUBLIC_CONTEXT) --namespace $(FISSION_NAMESPACE) upgrade $(TEMPLATE_NAME) \
 			-f minikube-fission-values.yaml \
-			--set repository=ml.jingtao.fun \
-			--set logger.fluentdImageRepository=ml.jingtao.fun \
+			--set repository=$(PUBLIC_REPO) \
+			--set logger.fluentdImageRepository=$(PUBLIC_REPO) \
 			--set image=$(PUBLIC_FISSION_IMAGE_NAME),imageTag=$(PUBLIC_FISSION_IMAGE_TAG) \
 			--set fetcher.image=ml.jingtao.fun/$(PUBLIC_FISSION_FETCHER_IMAGE_NAME),fetcher.imageTag=$(PUBLIC_FISSION_FETCHER_IMAGE_TAG) \
 			--set logger.fluentdImage=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_NAME),logger.fluentdImageTag=$(PUBLIC_FISSION_FLUENTD_WRAPPER_IMAGE_TAG) \
 			--set preUpgradeChecksImage=ml.jingtao.fun/$(PUBLIC_FISSION_PREUPGRADECHECKS_IMAGE_NAME) \
 			./fission-all
+	fission --kube-context $(PUBLIC_CONTEXT) env update --name python --image $(PUBLIC_REPO)/$(PUBLIC_FISSION_ENV_PYTHON_IMAGE_NAME):$(PUBLIC_FISSION_ENV_PYTHON_IMAGE_TAG) --builder fission/python-builder:latest --graceperiod 10
