@@ -26,6 +26,9 @@ environments/php7/vendor/
 *.tgz
 
 .DS_Store
+.envrc
+.jvmrc
+cmd/fission-cli/OPATH
 vendor/
 local/
 environments/dotnet20/Builder/.vs/
